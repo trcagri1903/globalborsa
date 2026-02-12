@@ -81,7 +81,8 @@ async function fetchMarketData() {
 // Kart oluşturma fonksiyonu
 function createCard(name, price, change, isPositive, aiPrediction, aiStatus, type, currency) {
     return `
-        <div class="vip-card p-6 rounded-xl shadow-2xl border-l-4 ${isPositive ? 'border-green-500' : 'border-red-500'}">
+        <div class="vip-card p-6 rounded-xl shadow-2xl border-l-4 ${isPositive ? 'border-green-500' : 'border-red-500'}" 
+             onclick="openModal('${name.replace(/'/g, "\\'")}', ${price}, ${change}, ${isPositive}, ${aiPrediction}, '${aiStatus}', '${type}', '${currency}')">
             <div class="flex justify-between items-center mb-4">
                 <div>
                     <span class="text-gray-400 font-bold">${name}</span>
@@ -103,10 +104,137 @@ function createCard(name, price, change, isPositive, aiPrediction, aiStatus, typ
     `;
 }
 
+let currentChart = null;
+
+// Modal açma fonksiyonu
+function openModal(name, price, change, isPositive, aiPrediction, aiStatus, type, currency) {
+    const modal = document.getElementById('chartModal');
+    document.getElementById('modalTitle').textContent = name;
+    document.getElementById('modalPrice').textContent = `${currency}${price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    const changeElement = document.getElementById('modalChange');
+    changeElement.textContent = `${isPositive ? '▲' : '▼'} %${Math.abs(change).toFixed(2)}`;
+    changeElement.className = `text-2xl font-bold ${isPositive ? 'text-green-500' : 'text-red-500'}`;
+
+    document.getElementById('modalPrediction').textContent = `%${Math.abs(aiPrediction)} ${aiStatus}`;
+
+    modal.style.display = 'block';
+
+    // Grafik oluştur
+    setTimeout(() => renderChart(name, price, change, currency), 100);
+}
+
+// Modal kapatma fonksiyonu
+function closeModal() {
+    const modal = document.getElementById('chartModal');
+    modal.style.display = 'none';
+    if (currentChart) {
+        currentChart.destroy();
+        currentChart = null;
+    }
+}
+
+// Modal dışına tıklanınca kapat
+window.onclick = function (event) {
+    const modal = document.getElementById('chartModal');
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+
+// Grafik oluşturma fonksiyonu
+function renderChart(name, currentPrice, change, currency) {
+    const ctx = document.getElementById('priceChart').getContext('2d');
+
+    // Simüle edilmiş 7 günlük veri
+    const days = 7;
+    const labels = [];
+    const data = [];
+
+    for (let i = days; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        labels.push(date.toLocaleDateString('tr-TR', { month: 'short', day: 'numeric' }));
+
+        // Geçmiş fiyatları simüle et
+        const variance = (Math.random() - 0.5) * (currentPrice * 0.05);
+        const historicalPrice = i === 0 ? currentPrice : currentPrice - (change / 100 * currentPrice) + variance;
+        data.push(historicalPrice);
+    }
+
+    if (currentChart) {
+        currentChart.destroy();
+    }
+
+    currentChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Fiyat',
+                data: data,
+                borderColor: change >= 0 ? '#10b981' : '#ef4444',
+                backgroundColor: change >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: change >= 0 ? '#10b981' : '#ef4444',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fbbf24',
+                    bodyColor: '#fff',
+                    borderColor: '#fbbf24',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        label: function (context) {
+                            return currency + context.parsed.y.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        callback: function (value) {
+                            return currency + value.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#9ca3af'
+                    }
+                }
+            }
+        }
+    });
+}
+
 // Update timestamp
 function updateLastUpdateTime() {
     const now = new Date();
-    const timeString = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    const timeString = now.toLocaleString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     const updateElement = document.getElementById('last-update');
     if (updateElement) {
         updateElement.textContent = `Son güncelleme: ${timeString}`;
