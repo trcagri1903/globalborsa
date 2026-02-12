@@ -5,7 +5,12 @@ async function fetchMarketData() {
     try {
         // Kripto paralar için CoinGecko API (USD, TRY, EUR)
         const cryptoAssets = ['bitcoin', 'ethereum', 'tether', 'solana', 'binancecoin'];
-        const apiUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${cryptoAssets.join(',')}&vs_currencies=usd,try,eur&include_24hr_change=true`;
+
+        // Değerli madenler (CoinGecko'da PAX Gold, Tether Gold gibi token'lar var)
+        const metalAssets = ['pax-gold', 'tether-gold'];
+
+        const allAssets = [...cryptoAssets, ...metalAssets];
+        const apiUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${allAssets.join(',')}&vs_currencies=usd,try,eur&include_24hr_change=true`;
 
         const cryptoResponse = await fetch(apiUrl, {
             method: 'GET',
@@ -26,20 +31,42 @@ async function fetchMarketData() {
 
         // Önceki kurları localStorage'dan al (değişim hesaplamak için)
         const previousRates = JSON.parse(localStorage.getItem('previousRates') || '{}');
-
         grid.innerHTML = ''; // Temizle
 
-        // Kripto paraları göster
-        Object.keys(cryptoData).forEach(id => {
-            const price = cryptoData[id].usd;
-            const change = cryptoData[id].usd_24h_change;
-            const isPositive = change >= 0;
+        // Kripto paraları göster (madenler hariç)
+        cryptoAssets.forEach(id => {
+            if (cryptoData[id]) {
+                const price = cryptoData[id].usd;
+                const change = cryptoData[id].usd_24h_change;
+                const isPositive = change >= 0;
 
-            // AI Tahmin Algoritması
-            const aiPrediction = (change * 1.5 + (Math.random() * 5)).toFixed(2);
-            const aiStatus = aiPrediction >= 0 ? 'Yükseliş' : 'Düşüş';
+                // AI Tahmin Algoritması
+                const aiPrediction = (change * 1.5 + (Math.random() * 5)).toFixed(2);
+                const aiStatus = aiPrediction >= 0 ? 'Yükseliş' : 'Düşüş';
 
-            grid.innerHTML += createCard(id.toUpperCase(), price, change, isPositive, aiPrediction, aiStatus, 'Kripto', '$');
+                grid.innerHTML += createCard(id.toUpperCase(), price, change, isPositive, aiPrediction, aiStatus, 'Kripto', '$');
+            }
+        });
+
+        // Değerli madenleri göster
+        const metalMapping = {
+            'pax-gold': { name: '🥇 Altın (PAXG)', symbol: 'GOLD' },
+            'tether-gold': { name: '🥇 Altın (XAUT)', symbol: 'GOLD' }
+        };
+
+        metalAssets.forEach(id => {
+            if (cryptoData[id]) {
+                const price = cryptoData[id].usd;
+                const change = cryptoData[id].usd_24h_change;
+                const isPositive = change >= 0;
+
+                // AI Tahmin
+                const aiPrediction = (change * 1.5 + (Math.random() * 4)).toFixed(2);
+                const aiStatus = aiPrediction >= 0 ? 'Yükseliş' : 'Düşüş';
+
+                const metalInfo = metalMapping[id];
+                grid.innerHTML += createCard(metalInfo.name, price, change, isPositive, aiPrediction, aiStatus, 'Değerli Maden', '$');
+            }
         });
 
         // Döviz kurlarını hesapla (Bitcoin fiyatlarından türetilmiş)
