@@ -70,7 +70,7 @@ async function fetchMarketData() {
 
         // Değerli madenleri göster
         const metalMapping = {
-            'pax-gold': { name: '🥇 Altın (PAXG)', symbol: 'GOLD' },
+            'silver-token': { name: '🥈 Gümüş (SLVT)', symbol: 'SILVER' },
             'tether-gold': { name: '🥇 Altın (XAUT)', symbol: 'GOLD' }
         };
 
