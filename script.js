@@ -5,12 +5,8 @@ async function fetchMarketData() {
     try {
         // Kripto paralar için CoinGecko API
         const cryptoAssets = ['bitcoin', 'ethereum', 'tether', 'solana', 'binancecoin'];
-        const cryptoResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoAssets.join(',')}&vs_currencies=usd&include_24hr_change=true`);
+        const cryptoResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoAssets.join(',')}&vs_currencies=usd,try&include_24hr_change=true`);
         const cryptoData = await cryptoResponse.json();
-
-        // Döviz kurları için exchangerate-api.com (ücretsiz)
-        const forexResponse = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-        const forexData = await forexResponse.json();
 
         // Önceki kurları localStorage'dan al (değişim hesaplamak için)
         const previousRates = JSON.parse(localStorage.getItem('previousRates') || '{}');
@@ -25,19 +21,18 @@ async function fetchMarketData() {
             const aiPrediction = (change * 1.5 + (Math.random() * 5)).toFixed(2);
             const aiStatus = aiPrediction >= 0 ? 'Yükseliş' : 'Düşüş';
 
-            grid.innerHTML += createCard(id.toUpperCase(), price, change, isPositive, aiPrediction, aiStatus, 'Kripto');
+            grid.innerHTML += createCard(id.toUpperCase(), price, change, isPositive, aiPrediction, aiStatus, 'Kripto', '$');
         });
 
-        // Döviz kurlarını göster
+        // Döviz kurlarını CoinGecko'dan al (TRY bazlı)
         const forexPairs = [
-            { name: 'USD/TRY', rate: forexData.rates.TRY, symbol: '💵' },
-            { name: 'EUR/TRY', rate: forexData.rates.TRY / forexData.rates.EUR, symbol: '💶' },
-            { name: 'EUR/USD', rate: forexData.rates.EUR, symbol: '💶' },
-            { name: 'GBP/TRY', rate: forexData.rates.TRY / forexData.rates.GBP, symbol: '💷' }
+            { name: 'USD/TRY', price: cryptoData.bitcoin.try / cryptoData.bitcoin.usd, symbol: '💵' },
+            { name: 'EUR/TRY', price: (cryptoData.bitcoin.try / cryptoData.bitcoin.usd) * 0.92, symbol: '💶' }, // Yaklaşık EUR kuru
+            { name: 'BTC/TRY', price: cryptoData.bitcoin.try, symbol: '₿' }
         ];
 
         forexPairs.forEach(pair => {
-            const currentRate = pair.rate;
+            const currentRate = pair.price;
             const previousRate = previousRates[pair.name] || currentRate;
             const change = ((currentRate - previousRate) / previousRate * 100);
             const isPositive = change >= 0;
@@ -53,7 +48,8 @@ async function fetchMarketData() {
                 isPositive,
                 aiPrediction,
                 aiStatus,
-                'Döviz'
+                'Döviz',
+                '₺'
             );
 
             // Mevcut kuru kaydet
@@ -67,12 +63,20 @@ async function fetchMarketData() {
         updateLastUpdateTime();
 
     } catch (error) {
-        grid.innerHTML = '<p class="text-red-500">Veriler şu an yüklenemiyor, lütfen API limitini kontrol edin.</p>';
+        console.error('API Error:', error);
+        grid.innerHTML = `
+            <div class="col-span-full text-center py-12">
+                <div class="text-6xl mb-4">⚠️</div>
+                <h3 class="text-xl font-bold text-red-400 mb-2">Veri Yüklenemedi</h3>
+                <p class="text-gray-400 mb-4">API bağlantısı kurulamadı. Lütfen sayfayı yenileyin.</p>
+                <button class="refresh-btn" onclick="refreshData()">Tekrar Dene</button>
+            </div>
+        `;
     }
 }
 
 // Kart oluşturma fonksiyonu
-function createCard(name, price, change, isPositive, aiPrediction, aiStatus, type) {
+function createCard(name, price, change, isPositive, aiPrediction, aiStatus, type, currency) {
     return `
         <div class="vip-card p-6 rounded-xl shadow-2xl border-l-4 ${isPositive ? 'border-green-500' : 'border-red-500'}">
             <div class="flex justify-between items-center mb-4">
@@ -84,7 +88,7 @@ function createCard(name, price, change, isPositive, aiPrediction, aiStatus, typ
                     ${isPositive ? '▲' : '▼'} %${Math.abs(change).toFixed(2)}
                 </span>
             </div>
-            <div class="text-3xl font-bold mb-4">${type === 'Döviz' ? '₺' : '$'}${price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div class="text-3xl font-bold mb-4">${currency}${price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             
             <div class="bg-black bg-opacity-40 p-3 rounded-lg border border-gray-800">
                 <div class="text-[10px] text-yellow-500 font-black tracking-widest uppercase mb-1">AI 30 Günlük Projeksiyon</div>
