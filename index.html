@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Exchange VIP - Canlı Piyasa Verileri</title>
+    <meta name="description"
+        content="Gerçek zamanlı kripto para, altın, gümüş ve döviz verileri ile yapay zeka destekli tahminler">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top right, #1a1a1a, #050505);
+            color: #e5e5e5;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(255, 215, 0, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 165, 0, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .vip-card {
+            background: linear-gradient(145deg, rgba(26, 26, 26, 0.9), rgba(15, 15, 15, 0.95));
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .vip-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .vip-card:hover {
+            transform: translateY(-5px);
+            border-color: #eab308;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.1);
+        }
+
+        .vip-card:hover::before {
+            left: 100%;
+        }
+
+        .price-positive {
+            color: #10b981;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .price-negative {
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+        }
+
+        .ai-badge {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #0a0a0a;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+            }
+        }
+
+        .loading-skeleton {
+            background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .header-glow {
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #0a0a0a;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(251, 191, 36, 0.5);
+        }
+
+        .refresh-btn:active {
+            transform: scale(0.98);
+        }
+
+        .chart-mini {
+            height: 40px;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .vip-card {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-6">
+    <div style="position: relative; z-index: 1;">
+        <header class="mb-8 md:mb-10 text-center">
+            <h1 class="text-3xl md:text-5xl font-bold text-yellow-500 header-glow mb-2">
+                GLOBAL EXCHANGE <span class="text-white text-base md:text-xl">VIP</span>
+            </h1>
+            <p class="text-gray-400 text-sm md:text-base mb-4">Canlı Veriler & Yapay Zeka Tahminleri</p>
+            <div class="flex justify-center items-center gap-4">
+                <button class="refresh-btn" onclick="refreshData()">
+                    <span id="refresh-icon">🔄</span> Yenile
+                </button>
+                <span class="text-xs text-gray-500" id="last-update">Son güncelleme: --:--</span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6" id="market-grid">
+            <!-- Market cards will be dynamically inserted here -->
+        </div>
+
+        <footer class="mt-12 text-center text-gray-500 text-xs">
+            <p>⚠️ Veriler bilgilendirme amaçlıdır. Yatırım tavsiyesi değildir.</p>
+            <p class="mt-2">Powered by CoinGecko API & AI Predictions</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
