@@ -258,19 +258,26 @@ window.onclick = function (event) {
 function renderChart(name, currentPrice, change, currency) {
     const ctx = document.getElementById('priceChart').getContext('2d');
 
-    // Simüle edilmiş 7 günlük veri
-    const days = 7;
+    // Simüle edilmiş 30 günlük veri (1 aylık)
+    const days = 30;
     const labels = [];
     const data = [];
 
     for (let i = days; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        labels.push(date.toLocaleDateString('tr-TR', { month: 'short', day: 'numeric' }));
 
-        // Geçmiş fiyatları simüle et
-        const variance = (Math.random() - 0.5) * (currentPrice * 0.05);
-        const historicalPrice = i === 0 ? currentPrice : currentPrice - (change / 100 * currentPrice) + variance;
+        // Her 5 günde bir tarih göster (grafiği temiz tutmak için)
+        if (i % 5 === 0 || i === 0) {
+            labels.push(date.toLocaleDateString('tr-TR', { month: 'short', day: 'numeric' }));
+        } else {
+            labels.push('');
+        }
+
+        // Geçmiş fiyatları simüle et - daha gerçekçi trend
+        const variance = (Math.random() - 0.5) * (currentPrice * 0.03);
+        const trendEffect = (change / 100 * currentPrice) * (i / days);
+        const historicalPrice = i === 0 ? currentPrice : currentPrice - trendEffect + variance;
         data.push(historicalPrice);
     }
 
@@ -380,6 +387,6 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Sayfa açıldığında ve her 1 saniyede bir verileri güncelle (anlık fiyatlar)
+// Sayfa açıldığında ve her 10 saniyede bir verileri güncelle
 fetchMarketData();
-setInterval(fetchMarketData, 1000);
+setInterval(fetchMarketData, 10000);
