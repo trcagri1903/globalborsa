@@ -6,8 +6,8 @@ async function fetchMarketData() {
         // Kripto paralar için CoinGecko API (USD, TRY, EUR)
         const cryptoAssets = ['bitcoin', 'ethereum', 'tether', 'solana', 'binancecoin'];
 
-        // Değerli madenler (CoinGecko'da PAX Gold, Tether Gold gibi token'lar var)
-        const metalAssets = ['pax-gold', 'tether-gold'];
+        // Değerli madenler - Gümüş ve Altın
+        const metalAssets = ['silver-token', 'tether-gold'];
 
         const allAssets = [...cryptoAssets, ...metalAssets];
         const apiUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${allAssets.join(',')}&vs_currencies=usd,try,eur&include_24hr_change=true`;
@@ -105,8 +105,7 @@ async function fetchMarketData() {
 
         const forexPairs = [
             { name: 'USD/TRY', price: usdTry, symbol: '💵' },
-            { name: 'EUR/TRY', price: eurTry, symbol: '💶' },
-            { name: 'BTC/TRY', price: cryptoData.bitcoin.try, symbol: '₿' }
+            { name: 'EUR/TRY', price: eurTry, symbol: '💶' }
         ];
 
         forexPairs.forEach(pair => {
