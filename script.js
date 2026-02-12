@@ -68,15 +68,24 @@ async function fetchMarketData() {
             </div>
         `;
 
-        // Değerli madenleri göster
+
+        // Değerli madenleri göster (Gram bazında TL fiyatı)
         const metalMapping = {
-            'silver-token': { name: '🥈 Gümüş (SLVT)', symbol: 'SILVER' },
-            'tether-gold': { name: '🥇 Altın (XAUT)', symbol: 'GOLD' }
+            'silver-token': { name: '🥈 Gümüş (Gram)', symbol: 'SILVER' },
+            'tether-gold': { name: '🥇 Altın (Gram)', symbol: 'GOLD' }
         };
+
+        const TROY_OUNCE_TO_GRAM = 31.1035; // 1 troy ounce = 31.1035 gram
 
         metalAssets.forEach(id => {
             if (cryptoData[id]) {
-                const price = cryptoData[id].usd;
+                // USD/ons fiyatını al
+                const pricePerOunceUSD = cryptoData[id].usd;
+                const priceTRY = cryptoData[id].try;
+
+                // Gram başına TL fiyatı hesapla
+                const pricePerGramTRY = priceTRY / TROY_OUNCE_TO_GRAM;
+
                 const change = cryptoData[id].usd_24h_change;
                 const isPositive = change >= 0;
 
@@ -85,7 +94,7 @@ async function fetchMarketData() {
                 const aiStatus = aiPrediction >= 0 ? 'Yükseliş' : 'Düşüş';
 
                 const metalInfo = metalMapping[id];
-                grid.innerHTML += createCard(metalInfo.name, price, change, isPositive, aiPrediction, aiStatus, 'Değerli Maden', '$');
+                grid.innerHTML += createCard(metalInfo.name, pricePerGramTRY, change, isPositive, aiPrediction, aiStatus, 'Değerli Maden', '₺');
             }
         });
 
@@ -371,6 +380,6 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Sayfa açıldığında ve her 30 saniyede bir verileri güncelle
+// Sayfa açıldığında ve her 1 saniyede bir verileri güncelle (anlık fiyatlar)
 fetchMarketData();
-setInterval(fetchMarketData, 30000);
+setInterval(fetchMarketData, 1000);
