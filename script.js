@@ -3,9 +3,9 @@ async function fetchMarketData() {
     grid.innerHTML = ''; // Yükleniyor efekti için temizle
 
     try {
-        // Kripto paralar için CoinGecko API
+        // Kripto paralar için CoinGecko API (USD, TRY, EUR)
         const cryptoAssets = ['bitcoin', 'ethereum', 'tether', 'solana', 'binancecoin'];
-        const cryptoResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoAssets.join(',')}&vs_currencies=usd,try&include_24hr_change=true`);
+        const cryptoResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoAssets.join(',')}&vs_currencies=usd,try,eur&include_24hr_change=true`);
         const cryptoData = await cryptoResponse.json();
 
         // Önceki kurları localStorage'dan al (değişim hesaplamak için)
@@ -24,10 +24,13 @@ async function fetchMarketData() {
             grid.innerHTML += createCard(id.toUpperCase(), price, change, isPositive, aiPrediction, aiStatus, 'Kripto', '$');
         });
 
-        // Döviz kurlarını CoinGecko'dan al (TRY bazlı)
+        // Döviz kurlarını hesapla (Bitcoin fiyatlarından türetilmiş)
+        const usdTry = cryptoData.bitcoin.try / cryptoData.bitcoin.usd;
+        const eurTry = cryptoData.bitcoin.try / cryptoData.bitcoin.eur;
+
         const forexPairs = [
-            { name: 'USD/TRY', price: cryptoData.bitcoin.try / cryptoData.bitcoin.usd, symbol: '💵' },
-            { name: 'EUR/TRY', price: (cryptoData.bitcoin.try / cryptoData.bitcoin.usd) * 0.92, symbol: '💶' }, // Yaklaşık EUR kuru
+            { name: 'USD/TRY', price: usdTry, symbol: '💵' },
+            { name: 'EUR/TRY', price: eurTry, symbol: '💶' },
             { name: 'BTC/TRY', price: cryptoData.bitcoin.try, symbol: '₿' }
         ];
 
