@@ -33,6 +33,16 @@ async function fetchMarketData() {
         const previousRates = JSON.parse(localStorage.getItem('previousRates') || '{}');
         grid.innerHTML = ''; // Temizle
 
+        // ===== KRİPTO PARALAR =====
+        grid.innerHTML += `
+            <div class="col-span-full mb-2">
+                <h2 class="text-2xl font-bold text-yellow-500 flex items-center gap-2">
+                    <span>💰</span> Kripto Paralar
+                </h2>
+                <div class="h-1 bg-gradient-to-r from-yellow-500 to-transparent rounded mt-2"></div>
+            </div>
+        `;
+
         // Kripto paraları göster (madenler hariç)
         cryptoAssets.forEach(id => {
             if (cryptoData[id]) {
@@ -47,6 +57,16 @@ async function fetchMarketData() {
                 grid.innerHTML += createCard(id.toUpperCase(), price, change, isPositive, aiPrediction, aiStatus, 'Kripto', '$');
             }
         });
+
+        // ===== DEĞERLİ MADENLER =====
+        grid.innerHTML += `
+            <div class="col-span-full mb-2 mt-6">
+                <h2 class="text-2xl font-bold text-yellow-500 flex items-center gap-2">
+                    <span>🥇</span> Değerli Madenler
+                </h2>
+                <div class="h-1 bg-gradient-to-r from-yellow-500 to-transparent rounded mt-2"></div>
+            </div>
+        `;
 
         // Değerli madenleri göster
         const metalMapping = {
@@ -68,6 +88,16 @@ async function fetchMarketData() {
                 grid.innerHTML += createCard(metalInfo.name, price, change, isPositive, aiPrediction, aiStatus, 'Değerli Maden', '$');
             }
         });
+
+        // ===== DÖVİZ KURLARI =====
+        grid.innerHTML += `
+            <div class="col-span-full mb-2 mt-6">
+                <h2 class="text-2xl font-bold text-yellow-500 flex items-center gap-2">
+                    <span>💱</span> Döviz Kurları
+                </h2>
+                <div class="h-1 bg-gradient-to-r from-yellow-500 to-transparent rounded mt-2"></div>
+            </div>
+        `;
 
         // Döviz kurlarını hesapla (Bitcoin fiyatlarından türetilmiş)
         const usdTry = cryptoData.bitcoin.try / cryptoData.bitcoin.usd;
