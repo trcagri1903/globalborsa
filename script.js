@@ -1,15 +1,33 @@
 async function fetchMarketData() {
     const grid = document.getElementById('market-grid');
-    grid.innerHTML = ''; // Yükleniyor efekti için temizle
+    grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-400">Yükleniyor...</div>';
 
     try {
         // Kripto paralar için CoinGecko API (USD, TRY, EUR)
         const cryptoAssets = ['bitcoin', 'ethereum', 'tether', 'solana', 'binancecoin'];
-        const cryptoResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoAssets.join(',')}&vs_currencies=usd,try,eur&include_24hr_change=true`);
+        const apiUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${cryptoAssets.join(',')}&vs_currencies=usd,try,eur&include_24hr_change=true`;
+
+        const cryptoResponse = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!cryptoResponse.ok) {
+            throw new Error(`API Error: ${cryptoResponse.status}`);
+        }
+
         const cryptoData = await cryptoResponse.json();
+
+        // Veriyi cache'e kaydet
+        localStorage.setItem('cachedCryptoData', JSON.stringify(cryptoData));
+        localStorage.setItem('lastFetchTime', Date.now().toString());
 
         // Önceki kurları localStorage'dan al (değişim hesaplamak için)
         const previousRates = JSON.parse(localStorage.getItem('previousRates') || '{}');
+
+        grid.innerHTML = ''; // Temizle
 
         // Kripto paraları göster
         Object.keys(cryptoData).forEach(id => {
@@ -67,14 +85,43 @@ async function fetchMarketData() {
 
     } catch (error) {
         console.error('API Error:', error);
-        grid.innerHTML = `
-            <div class="col-span-full text-center py-12">
-                <div class="text-6xl mb-4">⚠️</div>
-                <h3 class="text-xl font-bold text-red-400 mb-2">Veri Yüklenemedi</h3>
-                <p class="text-gray-400 mb-4">API bağlantısı kurulamadı. Lütfen sayfayı yenileyin.</p>
-                <button class="refresh-btn" onclick="refreshData()">Tekrar Dene</button>
-            </div>
-        `;
+
+        // Cache'den veri yükle
+        const cachedData = localStorage.getItem('cachedCryptoData');
+        const lastFetch = localStorage.getItem('lastFetchTime');
+
+        if (cachedData) {
+            const cryptoData = JSON.parse(cachedData);
+            const cacheAge = Math.floor((Date.now() - parseInt(lastFetch)) / 1000 / 60); // dakika
+
+            grid.innerHTML = `
+                <div class="col-span-full bg-yellow-900 bg-opacity-20 border border-yellow-600 rounded-lg p-4 mb-4">
+                    <p class="text-yellow-500 text-sm">⚠️ Canlı veri alınamadı. ${cacheAge} dakika önceki veriler gösteriliyor.</p>
+                </div>
+            `;
+
+            // Cache'den verileri göster
+            Object.keys(cryptoData).forEach(id => {
+                const price = cryptoData[id].usd;
+                const change = cryptoData[id].usd_24h_change || 0;
+                const isPositive = change >= 0;
+                const aiPrediction = (change * 1.5 + (Math.random() * 5)).toFixed(2);
+                const aiStatus = aiPrediction >= 0 ? 'Yükseliş' : 'Düşüş';
+                grid.innerHTML += createCard(id.toUpperCase(), price, change, isPositive, aiPrediction, aiStatus, 'Kripto', '$');
+            });
+
+            updateLastUpdateTime();
+        } else {
+            grid.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <div class="text-6xl mb-4">⚠️</div>
+                    <h3 class="text-xl font-bold text-red-400 mb-2">Veri Yüklenemedi</h3>
+                    <p class="text-gray-400 mb-2">CoinGecko API'ye bağlanılamadı.</p>
+                    <p class="text-gray-500 text-sm mb-4">Lütfen birkaç dakika sonra tekrar deneyin.</p>
+                    <button class="refresh-btn" onclick="refreshData()">Tekrar Dene</button>
+                </div>
+            `;
+        }
     }
 }
 
