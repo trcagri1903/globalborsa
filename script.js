@@ -1,6 +1,10 @@
 async function fetchMarketData() {
     const grid = document.getElementById('market-grid');
-    grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-400">Yükleniyor...</div>';
+
+    // İlk yüklemede grid boşsa "Yükleniyor" göster
+    if (grid.children.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-400">Yükleniyor...</div>';
+    }
 
     try {
         // Kripto paralar için CoinGecko API (USD, TRY, EUR)
@@ -31,7 +35,9 @@ async function fetchMarketData() {
 
         // Önceki kurları localStorage'dan al (değişim hesaplamak için)
         const previousRates = JSON.parse(localStorage.getItem('previousRates') || '{}');
-        grid.innerHTML = ''; // Temizle
+
+        // Grid'i temizle (artık yumuşak geçiş için)
+        grid.innerHTML = '';
 
         // ===== KRİPTO PARALAR =====
         grid.innerHTML += `
